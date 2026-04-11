@@ -4,8 +4,8 @@ local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
 local Window = Rayfield:CreateWindow({
    Name = "Sky Hub 🌌",
-   LoadingTitle = "Loading Sky Hub...",
-   LoadingSubtitle = "from GitHub",
+   LoadingTitle = "Sky",
+   LoadingSubtitle = "By Gagaga",
    ConfigurationSaving = {
       Enabled = false
    }
