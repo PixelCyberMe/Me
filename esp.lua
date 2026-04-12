@@ -10,7 +10,7 @@ local function createESP(char, player)
     if not char then return end
     if char:FindFirstChild("ESP") then return end
 
-    -- ⚪ Highlight
+    -- ⚪ обводка
     local highlight = Instance.new("Highlight")
     highlight.Name = "ESP"
     highlight.FillTransparency = 1
@@ -18,7 +18,7 @@ local function createESP(char, player)
     highlight.OutlineColor = Color3.fromRGB(255,255,255)
     highlight.Parent = char
 
-    -- 🏷 НИК (фикс)
+    -- 🏷 маленький ник
     task.spawn(function()
         local head = char:WaitForChild("Head", 5)
         if not head then return end
@@ -26,10 +26,10 @@ local function createESP(char, player)
         if not head:FindFirstChild("ESP_Name") then
             local bill = Instance.new("BillboardGui")
             bill.Name = "ESP_Name"
-            bill.Size = UDim2.new(0, 200, 0, 40)
+            bill.Size = UDim2.new(0, 120, 0, 18) -- 👈 маленький размер
             bill.StudsOffset = Vector3.new(0, 2.5, 0)
             bill.AlwaysOnTop = true
-            bill.Adornee = head -- 🔥 ВАЖНО
+            bill.Adornee = head
             bill.Parent = head
 
             local text = Instance.new("TextLabel")
@@ -37,8 +37,9 @@ local function createESP(char, player)
             text.BackgroundTransparency = 1
             text.Text = player.Name
             text.TextColor3 = Color3.fromRGB(255,255,255)
-            text.TextStrokeTransparency = 0
-            text.TextScaled = true
+            text.TextStrokeTransparency = 0.3
+            text.TextScaled = false
+            text.TextSize = 12 -- 👈 аккуратный размер
             text.Font = Enum.Font.SourceSansBold
             text.Parent = bill
         end
@@ -93,7 +94,7 @@ UserInputService.InputBegan:Connect(function(input, gp)
     end
 end)
 
--- 🚀 старт
+-- 🚀 запуск
 task.wait(1)
 applyESP()
-print("ESP enabled with names (fixed)")
+print("ESP enabled (white outline + small names)")
