@@ -10,7 +10,6 @@ local function createESP(char, player)
     if not char then return end
     if char:FindFirstChild("ESP") then return end
 
-    -- ⚪ обводка
     local highlight = Instance.new("Highlight")
     highlight.Name = "ESP"
     highlight.FillTransparency = 1
@@ -18,7 +17,6 @@ local function createESP(char, player)
     highlight.OutlineColor = Color3.fromRGB(255,255,255)
     highlight.Parent = char
 
-    -- 🏷 маленький ник
     task.spawn(function()
         local head = char:WaitForChild("Head", 5)
         if not head then return end
@@ -26,7 +24,7 @@ local function createESP(char, player)
         if not head:FindFirstChild("ESP_Name") then
             local bill = Instance.new("BillboardGui")
             bill.Name = "ESP_Name"
-            bill.Size = UDim2.new(0, 120, 0, 18) -- 👈 маленький размер
+            bill.Size = UDim2.new(0, 100, 0, 14)
             bill.StudsOffset = Vector3.new(0, 2.5, 0)
             bill.AlwaysOnTop = true
             bill.Adornee = head
@@ -39,26 +37,30 @@ local function createESP(char, player)
             text.TextColor3 = Color3.fromRGB(255,255,255)
             text.TextStrokeTransparency = 0.3
             text.TextScaled = false
-            text.TextSize = 7 -- 👈 аккуратный размер
+            text.TextSize = 8
             text.Font = Enum.Font.SourceSansBold
             text.Parent = bill
         end
     end)
 end
 
+local function setupPlayer(player)
+    if player == LocalPlayer then return end
+
+    if player.Character then
+        createESP(player.Character, player)
+    end
+
+    player.CharacterAdded:Connect(function(char)
+        if enabled then
+            createESP(char, player)
+        end
+    end)
+end
+
 local function applyESP()
     for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            if player.Character then
-                createESP(player.Character, player)
-            end
-
-            player.CharacterAdded:Connect(function(char)
-                if enabled then
-                    createESP(char, player)
-                end
-            end)
-        end
+        setupPlayer(player)
     end
 end
 
@@ -77,7 +79,12 @@ local function removeESP()
     end
 end
 
--- ⌨️ M toggle
+Players.PlayerAdded:Connect(function(player)
+    if enabled then
+        setupPlayer(player)
+    end
+end)
+
 UserInputService.InputBegan:Connect(function(input, gp)
     if gp then return end
 
@@ -94,7 +101,6 @@ UserInputService.InputBegan:Connect(function(input, gp)
     end
 end)
 
--- 🚀 запуск
 task.wait(1)
 applyESP()
-print("ESP enabled (white outline + small names)")
+print("ESP enabled (fixed + new players)")
