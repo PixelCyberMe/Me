@@ -1,4 +1,4 @@
-print("ESP PRO loaded!")
+print("ESP Skeleton loaded!")
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -18,35 +18,26 @@ local function createHighlight(char)
     h.Name = "ESP"
     h.FillTransparency = 1
     h.OutlineTransparency = 0
-    h.OutlineColor = Color3.fromRGB(0,255,100) -- 🟩 зелёный
+    h.OutlineColor = Color3.fromRGB(0,255,100)
     h.Parent = char
 end
 
--- 📦 Box + 🦴 Skeleton (Drawing API)
-local function createDrawings(player)
-    drawings[player] = {
-        box = Drawing.new("Square"),
-        lines = {}
-    }
+-- 🦴 Skeleton
+local function createSkeleton(player)
+    drawings[player] = {}
 
-    local box = drawings[player].box
-    box.Thickness = 1.5
-    box.Color = Color3.fromRGB(0,255,100)
-    box.Filled = false
-
-    -- скелет (несколько линий)
     for i = 1, 10 do
         local line = Drawing.new("Line")
-        line.Thickness = 1
+        line.Thickness = 1.5
         line.Color = Color3.fromRGB(0,255,100)
-        table.insert(drawings[player].lines, line)
+        line.Visible = false
+        table.insert(drawings[player], line)
     end
 end
 
-local function removeDrawings(player)
+local function removeSkeleton(player)
     if drawings[player] then
-        drawings[player].box:Remove()
-        for _, l in pairs(drawings[player].lines) do
+        for _, l in pairs(drawings[player]) do
             l:Remove()
         end
         drawings[player] = nil
@@ -56,7 +47,7 @@ end
 local function setupPlayer(player)
     if player == LocalPlayer then return end
 
-    createDrawings(player)
+    createSkeleton(player)
 
     if player.Character then
         createHighlight(player.Character)
@@ -69,53 +60,37 @@ local function setupPlayer(player)
     end)
 end
 
--- 🔄 обновление ESP
+-- 🔄 обновление
 RunService.RenderStepped:Connect(function()
     if not enabled then return end
 
-    for player, data in pairs(drawings) do
+    for player, lines in pairs(drawings) do
         local char = player.Character
         if not char then continue end
 
-        local hrp = char:FindFirstChild("HumanoidRootPart")
-        if not hrp then continue end
+        local parts = {
+            "Head","UpperTorso","LowerTorso",
+            "LeftUpperArm","RightUpperArm",
+            "LeftUpperLeg","RightUpperLeg"
+        }
 
-        local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
-        if onScreen then
-            local size = (Camera:WorldToViewportPoint(hrp.Position + Vector3.new(0,3,0)).Y - pos.Y) * 2
+        for i = 1, #parts - 1 do
+            local p1 = char:FindFirstChild(parts[i])
+            local p2 = char:FindFirstChild(parts[i+1])
 
-            -- 📦 BOX
-            data.box.Size = Vector2.new(size, size*1.5)
-            data.box.Position = Vector2.new(pos.X - size/2, pos.Y - size)
-            data.box.Visible = true
+            local line = lines[i]
 
-            -- 🦴 Skeleton (примитив)
-            local parts = {
-                "Head","UpperTorso","LowerTorso",
-                "LeftUpperArm","RightUpperArm",
-                "LeftUpperLeg","RightUpperLeg"
-            }
+            if p1 and p2 and line then
+                local v1, vis1 = Camera:WorldToViewportPoint(p1.Position)
+                local v2, vis2 = Camera:WorldToViewportPoint(p2.Position)
 
-            for i, partName in ipairs(parts) do
-                local part = char:FindFirstChild(partName)
-                local nextPart = char:FindFirstChild(parts[i+1])
-
-                if part and nextPart then
-                    local p1 = Camera:WorldToViewportPoint(part.Position)
-                    local p2 = Camera:WorldToViewportPoint(nextPart.Position)
-
-                    local line = data.lines[i]
-                    if line then
-                        line.From = Vector2.new(p1.X, p1.Y)
-                        line.To = Vector2.new(p2.X, p2.Y)
-                        line.Visible = true
-                    end
+                if vis1 and vis2 then
+                    line.From = Vector2.new(v1.X, v1.Y)
+                    line.To = Vector2.new(v2.X, v2.Y)
+                    line.Visible = true
+                else
+                    line.Visible = false
                 end
-            end
-        else
-            data.box.Visible = false
-            for _, l in pairs(data.lines) do
-                l.Visible = false
             end
         end
     end
@@ -144,9 +119,8 @@ UserInputService.InputBegan:Connect(function(input, gp)
             print("ESP ON")
         else
             print("ESP OFF")
-            for _, d in pairs(drawings) do
-                d.box.Visible = false
-                for _, l in pairs(d.lines) do
+            for _, lines in pairs(drawings) do
+                for _, l in pairs(lines) do
                     l.Visible = false
                 end
             end
