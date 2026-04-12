@@ -39,7 +39,7 @@ local function createESP(char, player)
             text.TextColor3 = Color3.fromRGB(255,255,255)
             text.TextStrokeTransparency = 0.3
             text.TextScaled = false
-            text.TextSize = 4 -- 👈 аккуратный размер
+            text.TextSize = 7 -- 👈 аккуратный размер
             text.Font = Enum.Font.SourceSansBold
             text.Parent = bill
         end
