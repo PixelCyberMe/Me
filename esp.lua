@@ -10,34 +10,39 @@ local function createESP(char, player)
     if not char then return end
     if char:FindFirstChild("ESP") then return end
 
-    -- ⚪ Highlight (обводка)
+    -- ⚪ Highlight
     local highlight = Instance.new("Highlight")
     highlight.Name = "ESP"
     highlight.FillTransparency = 1
     highlight.OutlineTransparency = 0
-    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+    highlight.OutlineColor = Color3.fromRGB(255,255,255)
     highlight.Parent = char
 
-    -- 🏷 ник над головой
-    local head = char:FindFirstChild("Head")
-    if head and not head:FindFirstChild("ESP_Name") then
-        local bill = Instance.new("BillboardGui")
-        bill.Name = "ESP_Name"
-        bill.Size = UDim2.new(0, 200, 0, 50)
-        bill.StudsOffset = Vector3.new(0, 2, 0)
-        bill.AlwaysOnTop = true
-        bill.Parent = head
+    -- 🏷 НИК (фикс)
+    task.spawn(function()
+        local head = char:WaitForChild("Head", 5)
+        if not head then return end
 
-        local text = Instance.new("TextLabel")
-        text.Size = UDim2.new(1, 0, 1, 0)
-        text.BackgroundTransparency = 1
-        text.Text = player.Name
-        text.TextColor3 = Color3.fromRGB(255, 255, 255)
-        text.TextStrokeTransparency = 0
-        text.TextScaled = true
-        text.Font = Enum.Font.SourceSansBold
-        text.Parent = bill
-    end
+        if not head:FindFirstChild("ESP_Name") then
+            local bill = Instance.new("BillboardGui")
+            bill.Name = "ESP_Name"
+            bill.Size = UDim2.new(0, 200, 0, 40)
+            bill.StudsOffset = Vector3.new(0, 2.5, 0)
+            bill.AlwaysOnTop = true
+            bill.Adornee = head -- 🔥 ВАЖНО
+            bill.Parent = head
+
+            local text = Instance.new("TextLabel")
+            text.Size = UDim2.new(1,0,1,0)
+            text.BackgroundTransparency = 1
+            text.Text = player.Name
+            text.TextColor3 = Color3.fromRGB(255,255,255)
+            text.TextStrokeTransparency = 0
+            text.TextScaled = true
+            text.Font = Enum.Font.SourceSansBold
+            text.Parent = bill
+        end
+    end)
 end
 
 local function applyESP()
@@ -88,7 +93,7 @@ UserInputService.InputBegan:Connect(function(input, gp)
     end
 end)
 
--- 🚀 запуск
+-- 🚀 старт
 task.wait(1)
 applyESP()
-print("ESP enabled with names")
+print("ESP enabled with names (fixed)")
