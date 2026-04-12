@@ -1,90 +1,139 @@
-print("ESP script loaded!")
+print("ESP PRO loaded!")
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local LocalPlayer = Players.LocalPlayer
-local enabled = true
+local Camera = workspace.CurrentCamera
 
-local function createESP(char, player)
-    if not char then return end
+local enabled = true
+local drawings = {}
+
+-- 🟩 Highlight
+local function createHighlight(char)
     if char:FindFirstChild("ESP") then return end
 
-    local highlight = Instance.new("Highlight")
-    highlight.Name = "ESP"
-    highlight.FillTransparency = 1
-    highlight.OutlineTransparency = 0
-    highlight.OutlineColor = Color3.fromRGB(255,255,255)
-    highlight.Parent = char
+    local h = Instance.new("Highlight")
+    h.Name = "ESP"
+    h.FillTransparency = 1
+    h.OutlineTransparency = 0
+    h.OutlineColor = Color3.fromRGB(0,255,100) -- 🟩 зелёный
+    h.Parent = char
+end
 
-    task.spawn(function()
-        local head = char:WaitForChild("Head", 5)
-        if not head then return end
+-- 📦 Box + 🦴 Skeleton (Drawing API)
+local function createDrawings(player)
+    drawings[player] = {
+        box = Drawing.new("Square"),
+        lines = {}
+    }
 
-        if not head:FindFirstChild("ESP_Name") then
-            local bill = Instance.new("BillboardGui")
-            bill.Name = "ESP_Name"
-            bill.Size = UDim2.new(0, 100, 0, 14)
-            bill.StudsOffset = Vector3.new(0, 2.5, 0)
-            bill.AlwaysOnTop = true
-            bill.Adornee = head
-            bill.Parent = head
+    local box = drawings[player].box
+    box.Thickness = 1.5
+    box.Color = Color3.fromRGB(0,255,100)
+    box.Filled = false
 
-            local text = Instance.new("TextLabel")
-            text.Size = UDim2.new(1,0,1,0)
-            text.BackgroundTransparency = 1
-            text.Text = player.Name
-            text.TextColor3 = Color3.fromRGB(255,255,255)
-            text.TextStrokeTransparency = 0.3
-            text.TextScaled = false
-            text.TextSize = 8
-            text.Font = Enum.Font.SourceSansBold
-            text.Parent = bill
+    -- скелет (несколько линий)
+    for i = 1, 10 do
+        local line = Drawing.new("Line")
+        line.Thickness = 1
+        line.Color = Color3.fromRGB(0,255,100)
+        table.insert(drawings[player].lines, line)
+    end
+end
+
+local function removeDrawings(player)
+    if drawings[player] then
+        drawings[player].box:Remove()
+        for _, l in pairs(drawings[player].lines) do
+            l:Remove()
         end
-    end)
+        drawings[player] = nil
+    end
 end
 
 local function setupPlayer(player)
     if player == LocalPlayer then return end
 
+    createDrawings(player)
+
     if player.Character then
-        createESP(player.Character, player)
+        createHighlight(player.Character)
     end
 
     player.CharacterAdded:Connect(function(char)
         if enabled then
-            createESP(char, player)
+            createHighlight(char)
         end
     end)
 end
 
-local function applyESP()
-    for _, player in pairs(Players:GetPlayers()) do
-        setupPlayer(player)
-    end
-end
+-- 🔄 обновление ESP
+RunService.RenderStepped:Connect(function()
+    if not enabled then return end
 
-local function removeESP()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player.Character then
-            local esp = player.Character:FindFirstChild("ESP")
-            if esp then esp:Destroy() end
+    for player, data in pairs(drawings) do
+        local char = player.Character
+        if not char then continue end
 
-            local head = player.Character:FindFirstChild("Head")
-            if head then
-                local name = head:FindFirstChild("ESP_Name")
-                if name then name:Destroy() end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if not hrp then continue end
+
+        local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+        if onScreen then
+            local size = (Camera:WorldToViewportPoint(hrp.Position + Vector3.new(0,3,0)).Y - pos.Y) * 2
+
+            -- 📦 BOX
+            data.box.Size = Vector2.new(size, size*1.5)
+            data.box.Position = Vector2.new(pos.X - size/2, pos.Y - size)
+            data.box.Visible = true
+
+            -- 🦴 Skeleton (примитив)
+            local parts = {
+                "Head","UpperTorso","LowerTorso",
+                "LeftUpperArm","RightUpperArm",
+                "LeftUpperLeg","RightUpperLeg"
+            }
+
+            for i, partName in ipairs(parts) do
+                local part = char:FindFirstChild(partName)
+                local nextPart = char:FindFirstChild(parts[i+1])
+
+                if part and nextPart then
+                    local p1 = Camera:WorldToViewportPoint(part.Position)
+                    local p2 = Camera:WorldToViewportPoint(nextPart.Position)
+
+                    local line = data.lines[i]
+                    if line then
+                        line.From = Vector2.new(p1.X, p1.Y)
+                        line.To = Vector2.new(p2.X, p2.Y)
+                        line.Visible = true
+                    end
+                end
+            end
+        else
+            data.box.Visible = false
+            for _, l in pairs(data.lines) do
+                l.Visible = false
             end
         end
     end
-end
+end)
 
+-- 🆕 новые игроки
 Players.PlayerAdded:Connect(function(player)
     if enabled then
         setupPlayer(player)
     end
 end)
 
+-- 🚀 запуск
+for _, p in pairs(Players:GetPlayers()) do
+    setupPlayer(p)
+end
+
+-- ⌨️ toggle
 UserInputService.InputBegan:Connect(function(input, gp)
     if gp then return end
 
@@ -93,14 +142,14 @@ UserInputService.InputBegan:Connect(function(input, gp)
 
         if enabled then
             print("ESP ON")
-            applyESP()
         else
             print("ESP OFF")
-            removeESP()
+            for _, d in pairs(drawings) do
+                d.box.Visible = false
+                for _, l in pairs(d.lines) do
+                    l.Visible = false
+                end
+            end
         end
     end
 end)
-
-task.wait(1)
-applyESP()
-print("ESP enabled (fixed + new players)")
