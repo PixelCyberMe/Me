@@ -6,11 +6,12 @@ local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 
-local thirdPerson = false -- 👈 теперь по умолчанию 1 лицо
+local thirdPerson = true
 
 -- 🔒 ShiftLock
 local function setShiftLock(state)
     player.DevEnableMouseLock = state
+    print("ShiftLock:", state and "ON" or "OFF")
 end
 
 -- 📷 камера
@@ -21,10 +22,10 @@ local function updateCamera()
     if thirdPerson then
         player.CameraMode = Enum.CameraMode.Classic
         if hum then camera.CameraSubject = hum end
-        print("3RD PERSON ON")
+        print("Third Person ON")
     else
         player.CameraMode = Enum.CameraMode.LockFirstPerson
-        print("1ST PERSON ON")
+        print("First Person ON")
     end
 end
 
@@ -35,14 +36,14 @@ gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local button = Instance.new("TextButton")
-button.Size = UDim2.new(0, 140, 0, 45)
+button.Size = UDim2.new(0, 140, 0, 50)
 button.Position = UDim2.new(0.1, 0, 0.5, 0)
-button.Text = "1ST PERSON"
+button.Text = "3RD PERSON"
 button.BackgroundColor3 = Color3.fromRGB(30,30,30)
 button.TextColor3 = Color3.fromRGB(255,255,255)
 button.Parent = gui
 
--- 🎯 toggle
+-- 🎮 toggle
 button.MouseButton1Click:Connect(function()
     thirdPerson = not thirdPerson
 
@@ -57,13 +58,13 @@ button.MouseButton1Click:Connect(function()
     updateCamera()
 end)
 
--- 🔄 respawn
+-- 🔄 respawn fix
 player.CharacterAdded:Connect(function()
     task.wait(1)
     updateCamera()
 end)
 
--- 🟢 DRAG
+-- 🟢 DRAG FIX (ПК + МОБИЛКА)
 local dragging = false
 local dragStart
 local startPos
@@ -107,6 +108,7 @@ end)
 
 -- 🚀 старт
 task.wait(1)
+setShiftLock(true)
 updateCamera()
 
 print("Camera system ready!")
