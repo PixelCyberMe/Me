@@ -1,24 +1,20 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("InterimStorage") or game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 
-local LibFolder = ReplicatedStorage:FindFirstChild("Lib")
-if not LibFolder then
-    print("[Error] Этот скрипт работает только в определенной хоррор-игре!")
-    return
-
-local Library = require(LibFolder)
-
-local function keepSanityFull()
-    if LocalPlayer then
+if LocalPlayer then
+    print("[Sanity-Hack]: Цель найдена! Замораживаем рассудок.")
+    
+    -- Жесткий цикл на каждый кадр игры
+    RunService.Heartbeat:Connect(function()
+        -- Ставим ровно 100% рассудка
         LocalPlayer:SetAttribute("Sanity", 100)
-    end
+    end)
+    
+    -- Дополнительно проверяем принудительное изменение через событие
+    LocalPlayer:GetAttributeChangedSignal("Sanity"):Connect(function()
+        if LocalPlayer:GetAttribute("Sanity") < 100 then
+            LocalPlayer:SetAttribute("Sanity", 100)
+        end
+    end)
 end
-
-Library.Inject("PlayerLostSanity", keepSanityFull)
-LocalPlayer:GetAttributeChangedSignal("Sanity"):Connect(keepSanityFull)
-RunService.Heartbeat:Connect(keepSanityFull)
-
-keepSanityFull()
-print("[Success] Читы на рассудок успешно активированы!")
